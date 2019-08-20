@@ -1,0 +1,9 @@
+<jxb:bindings version="1.0"
+              xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <jxb:bindings schemaLocation="BPMN20.xsd" node="/xs:schema">
+        <jxb:bindings  node="//xs:element[@name='definitions']">
+            <jxb:class name="fr.pantheonsorbonne.cri.TDefinitions"/>
+        </jxb:bindings> 
+    </jxb:bindings>
+</jxb:bindings>

@@ -1,0 +1,23 @@
+<xsd:schema 
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+   xmlns="http://www.example.org" 
+   targetNamespace="http://www.example.org"
+   elementFormDefault="qualified">
+ 
+   <xsd:complexType name="address">
+      <xsd:sequence>
+         <xsd:element name="street" type="xsd:string" minOccurs="0"/>
+         <xsd:element name="city" type="xsd:string" minOccurs="0"/>
+      </xsd:sequence>
+   </xsd:complexType>
+ 
+   <xsd:element name="customer">
+      <xsd:complexType>
+         <xsd:sequence>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="address" type="address" minOccurs="0"/>
+         </xsd:sequence>
+      </xsd:complexType>
+   </xsd:element>
+ 
+</xsd:schema>
