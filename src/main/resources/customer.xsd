@@ -1,23 +1,24 @@
-<xsd:schema 
-   xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-   xmlns="http://www.example.org" 
-   targetNamespace="http://www.example.org"
-   elementFormDefault="qualified">
- 
-   <xsd:complexType name="address">
-      <xsd:sequence>
-         <xsd:element name="street" type="xsd:string" minOccurs="0"/>
-         <xsd:element name="city" type="xsd:string" minOccurs="0"/>
-      </xsd:sequence>
-   </xsd:complexType>
- 
-   <xsd:element name="customer">
-      <xsd:complexType>
-         <xsd:sequence>
-            <xsd:element name="name" type="xsd:string" minOccurs="0"/>
-            <xsd:element name="address" type="address" minOccurs="0"/>
-         </xsd:sequence>
-      </xsd:complexType>
-   </xsd:element>
- 
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xsd:schema xmlns="http://www.example.org"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	elementFormDefault="qualified" targetNamespace="http://www.example.org">
+	<xsd:complexType name="address">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" name="street"
+				type="xsd:string" />
+			<xsd:element minOccurs="0" name="city" type="xsd:string" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+
+
+	<xsd:complexType name="customer">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" name="name" type="xsd:string" />
+			<xsd:element minOccurs="0" name="address" type="address" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+
+
 </xsd:schema>
