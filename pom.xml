@@ -142,6 +142,13 @@
 			<version>1.75</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.openapitools</groupId>
+			<artifactId>openapi-generator</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
@@ -231,7 +238,7 @@
 					</configuration>
 
 				</plugin>
-			
+
 
 			</plugins>
 		</pluginManagement>

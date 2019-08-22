@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -390,7 +391,7 @@ public class BPMNFacade {
 
 		for (TParticipant participant : this.getChoreography().getParticipant()) {
 			String participantName = participant.getName();
-			LOGGER.debug("for participant {}", participantName);
+			LOGGER.trace("for participant {}", participantName);
 			OpenAPI oai = getDefaultOAI(participantName);
 			List<TChoreographyTask> tasksWithIncommingMessages = getTaskWithIncommingMessageForParticipant(
 					participantName);
@@ -399,7 +400,7 @@ public class BPMNFacade {
 			oai.paths(paths);
 			for (TChoreographyTask task : tasksWithIncommingMessages) {
 				String taskName = task.getName();
-				LOGGER.debug("for incomming task {}", taskName);
+				LOGGER.trace("for incoming task {}", taskName);
 
 				List<Class<?>> klasses = getMessageTypes(task);
 
@@ -506,21 +507,24 @@ public class BPMNFacade {
 		return mapper;
 	}
 
-	public void writeOpenApi(File outputDir) {
+	public Collection<File> writeOpenApi(File outputDir) {
+		Collection<File> res = new HashSet<File>();
 		for (Map.Entry<TParticipant, OpenAPI> entry : this.getOpenApiMap().entrySet()) {
 
 			TParticipant participant = entry.getKey();
 			OpenAPI oai = entry.getValue();
 
-			File destimation = Paths.get(outputDir.toString(), participant.getName().replace(' ', '_') + ".yaml")
+			File destination = Paths.get(outputDir.toString(), participant.getName().replace(' ', '_') + ".yaml")
 					.toFile();
-			try (FileWriter writer = new FileWriter(destimation)) {
+			try (FileWriter writer = new FileWriter(destination)) {
 				writer.write(toYaml(oai));
-				LOGGER.debug("file {} written", destimation);
+				LOGGER.debug("file {} written", destination);
+				res.add(destination);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
+		return res;
 
 	}
 
