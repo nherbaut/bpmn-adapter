@@ -506,15 +506,17 @@ public class BPMNFacade {
 		return mapper;
 	}
 
-	public void writeOpenApi() {
+	public void writeOpenApi(File outputDir) {
 		for (Map.Entry<TParticipant, OpenAPI> entry : this.getOpenApiMap().entrySet()) {
 
 			TParticipant participant = entry.getKey();
 			OpenAPI oai = entry.getValue();
 
-			try (FileWriter writer = new FileWriter(new File(participant.getName() + ".yaml"))) {
+			File destimation = Paths.get(outputDir.toString(), participant.getName().replace(' ', '_') + ".yaml")
+					.toFile();
+			try (FileWriter writer = new FileWriter(destimation)) {
 				writer.write(toYaml(oai));
-				LOGGER.debug("file {} written", participant.getName() + ".yaml");
+				LOGGER.debug("file {} written", destimation);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

@@ -135,6 +135,13 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.28</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.beust</groupId>
+			<artifactId>jcommander</artifactId>
+			<version>1.75</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -224,6 +231,8 @@
 					</configuration>
 
 				</plugin>
+			
+
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -237,6 +246,32 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 
+			</plugin>
+
+
+			<plugin>
+
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>fr.pantheonsorbonne.cri.App</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 
