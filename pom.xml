@@ -16,7 +16,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jaxb2.version>2.5.0</jaxb2.version>
-		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
 	<dependencies>
@@ -139,7 +139,7 @@
 		<dependency>
 			<groupId>com.beust</groupId>
 			<artifactId>jcommander</artifactId>
-			<version>1.75</version>
+			<version>1.72</version>
 		</dependency>
 
 		<dependency>
@@ -192,7 +192,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
 					<configuration>
-						<release>${maven.compiler.target}</release>
+						<source>${maven.compiler.target}</source>
+						<target>${maven.compiler.target}</target>
 					</configuration>
 				</plugin>
 				<plugin>

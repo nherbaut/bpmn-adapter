@@ -1,6 +1,9 @@
 package fr.pantheonsorbonne.cri;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
@@ -38,16 +41,26 @@ public class App {
 	}
 
 	public void run() {
-		BPMNFacade diag = new BPMNFacade(this.bpmn2File);
 
+		try {
+			Path outputDir = Paths.get(this.outputDirectory.toString());
+			if (!Files.exists(outputDir)) {
+				Files.createDirectories(outputDir);
+			}
+		} catch (IOException e) {
+			LOGGER.error("failed to create directory : {}", outputDirectory.toString());
+			System.exit(-1);
+		}
+
+		BPMNFacade diag = new BPMNFacade(this.bpmn2File);
 		Map<TParticipant, OpenAPI> map = diag.getOpenApiMap();
 		Collection<File> yamls = diag.writeOpenApi(this.outputDirectory);
-
 		for (Map.Entry<TParticipant, OpenAPI> entry : map.entrySet()) {
 
 			ClientOptInput opts = new ClientOptInput();
 			AbstractJavaCodegen config = new JavaJerseyServerCodegen();
-			config.setOutputDir(Paths.get(this.outputDirectory.getPath(), entry.getKey().getName().replace(' ', '_'),"generated_server_stub").toString());
+			config.setOutputDir(Paths.get(this.outputDirectory.getPath(), entry.getKey().getName().replace(' ', '_'),
+					"generated_server_stub").toString());
 			opts.config(config);
 			opts.openAPI(entry.getValue());
 
