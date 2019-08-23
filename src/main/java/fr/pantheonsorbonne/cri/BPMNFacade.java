@@ -3,7 +3,6 @@ package fr.pantheonsorbonne.cri;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 import com.fasterxml.jackson.module.jsonSchema.factories.VisitorContext;
 import com.fasterxml.jackson.module.jsonSchema.factories.WrapperFactory;
-import com.google.common.base.Strings;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -84,9 +82,22 @@ public class BPMNFacade {
 
 	private static final String BPMN2_DEFINITIONS = "bpmn2:definitions";
 	private final TDefinitions definitions;
+	/**
+	 * Contains the namespace for external types of the BPMN2 file
+	 */
 	private final Map<String, String> ns = new HashMap<String, String>();
+
+	/**
+	 * Contains the Dynamically created types from the linked XSD
+	 */
 	private final Map<String, Collection<Class<?>>> types = new HashMap<>();
 
+	/**
+	 * Allow Deserializing the shemas from the provided API class
+	 * 
+	 * @author nherbaut
+	 *
+	 */
 	class OpenAPIDeserializer2 extends OpenAPIDeserializer {
 		public Schema<?> getSchema(ObjectNode node, String location) {
 			ParseResult pr = new ParseResult();
@@ -101,52 +112,18 @@ public class BPMNFacade {
 
 	}
 
-	class JsonTypeAndFormatHelper {
-		public String type;
-		public String format;
-
-		public JsonTypeAndFormatHelper(String type, String format) {
-			this.type = type;
-			this.format = format;
-		}
-
-		public JsonTypeAndFormatHelper(String type) {
-			this.type = type;
-			this.format = null;
-		}
-
-		public Schema<?> toSchema() {
-			if (Strings.isNullOrEmpty(format)) {
-				return new Schema().type(type);
-			} else if (format.startsWith("tns:")) {
-				return new Schema().$ref("#/components/schemas/" + format.split("tns:")[1]);
-			} else if (format.startsWith("xsd:")) {
-				return new Schema().type(type).format(format.split("xsd:")[1]);
-			} else {
-				return new Schema().type(type).format(format);
-			}
-		}
-	}
-
-	private File bpmnFile;
-
-	private InputStream getExampleChoreographModel() {
-
-		return App.class.getClassLoader().getResourceAsStream("choreography.xml");
-	}
-
 	private static class IgnoreURNSchemaFactoryWrapper extends SchemaFactoryWrapper {
 		public IgnoreURNSchemaFactoryWrapper() {
 			this(null, new WrapperFactory());
 		}
 
-		public IgnoreURNSchemaFactoryWrapper(SerializerProvider p) {
-			this(p, new WrapperFactory());
-		}
-
-		protected IgnoreURNSchemaFactoryWrapper(WrapperFactory wrapperFactory) {
-			this(null, wrapperFactory);
-		}
+//		public IgnoreURNSchemaFactoryWrapper(SerializerProvider p) {
+//			this(p, new WrapperFactory());
+//		}
+//
+//		protected IgnoreURNSchemaFactoryWrapper(WrapperFactory wrapperFactory) {
+//			this(null, wrapperFactory);
+//		}
 
 		public IgnoreURNSchemaFactoryWrapper(SerializerProvider p, WrapperFactory wrapperFactory) {
 			super(p, wrapperFactory);
@@ -158,7 +135,7 @@ public class BPMNFacade {
 		}
 	}
 
-	public Components getComponents() {
+	private Components getComponents() {
 		Components components = new Components();
 		ObjectMapper mapper = new ObjectMapper();
 		IgnoreURNSchemaFactoryWrapper visitor = new IgnoreURNSchemaFactoryWrapper();
@@ -198,7 +175,7 @@ public class BPMNFacade {
 			JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
-			StreamSource ss = new StreamSource(getExampleChoreographModel());
+			StreamSource ss = new StreamSource(bpmnFile);
 			JAXBElement<TDefinitions> o = jaxbUnmarshaller.unmarshal(ss, TDefinitions.class);
 
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
@@ -219,7 +196,7 @@ public class BPMNFacade {
 				}
 			};
 
-			saxParser.parse(getExampleChoreographModel(), handler);
+			saxParser.parse(bpmnFile, handler);
 
 			return o.getValue();
 		} catch (JAXBException | ParserConfigurationException | SAXException | IOException e) {
@@ -228,56 +205,54 @@ public class BPMNFacade {
 		}
 	}
 
-	public TChoreography getChoreography() {
+	private TChoreography getChoreography() {
 		return getDefinitionElements(TChoreography.class).findFirst().get();
 
 	}
 
 	public BPMNFacade(File bpmnFile) {
 
-		this.bpmnFile = bpmnFile;
 		this.definitions = readBPMNFromEmbdedModel(bpmnFile);
 
-		this.definitions.getImport().stream().filter(i -> i.getLocation().equals(i.getLocation()))
+		this.definitions.getImport().stream() //
+				.filter(i -> i.getLocation().equals(i.getLocation())) //
 				.forEach(i -> types.put(i.getNamespace(),
 						getExternalTypes(Paths.get(bpmnFile.getParentFile().getPath(), i.getLocation()).toFile())));
 
 	}
 
-	public List<TChoreographyTask> getChoreographyTasks() {
-		return this.getChoreography().getFlowElement().stream().map(e -> e.getValue())
-				.filter(obj -> obj instanceof TChoreographyTask).map(obj -> (TChoreographyTask) obj)
+	private List<TChoreographyTask> getChoreographyTasks() {
+		return this.getChoreography().getFlowElement().stream() //
+				.map(e -> e.getValue()) //
+				.filter(obj -> obj instanceof TChoreographyTask).map(obj -> (TChoreographyTask) obj) //
 				.collect(Collectors.toList());
 	}
 
 	private <T extends TBaseElement> Stream<T> getDefinitionElements(Class<T> klass) {
-		return definitions.getRootElement().stream()
-
-				.map(e -> e.getValue())
-				// .peek(System.out::println)
+		return definitions.getRootElement().stream()//
+				.map(e -> e.getValue()) //
 				.filter(e -> klass.isInstance(e)).map(e -> klass.cast(e));
 	}
 
-	public TMessage getMessage(QName qname) {
-		return this.getDefinitionElements(TMessage.class).filter(m -> qname.getLocalPart().equals("#" + m.getId()))
+	private TMessage getMessage(QName qname) {
+		return this.getDefinitionElements(TMessage.class)//
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
 				.findFirst().orElseThrow(NoSuchElementException::new);
 	}
 
-	public TMessageFlow getMessageFlow(QName qname) {
-		return this.getChoreography().getMessageFlow().stream()
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId())).findFirst()
+	private TMessageFlow getMessageFlow(QName qname) {
+		return this.getChoreography().getMessageFlow().stream()//
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
+				.findFirst()//
 				.orElseThrow(() -> new NoSuchElementException(qname.toString()));
 	}
 
-	public TParticipant getParticipant(QName qname) {
-		return this.getChoreography().getParticipant().stream()
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId())).findFirst()
-				.orElseThrow(NoSuchElementException::new);
-	}
+	
 
-	public TItemDefinition getItemDef(QName qname) {
-		return this.getDefinitionElements(TItemDefinition.class)
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId())).findFirst()
+	private TItemDefinition getItemDef(QName qname) {
+		return this.getDefinitionElements(TItemDefinition.class)//
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
+				.findFirst()//
 				.orElseThrow(NoSuchElementException::new);
 	}
 
@@ -292,8 +267,10 @@ public class BPMNFacade {
 		XSDEcoreBuilder xsdEcoreBuilder = new XSDEcoreBuilder();
 
 		Collection<EObject> eCorePackages = xsdEcoreBuilder.generate(schemaURI);
-		Deque<EClassifier> xsdKlasses = new ArrayDeque<EClassifier>(eCorePackages.stream().findFirst().get().eContents()
-				.stream().map(o -> (EClassifier) o).collect(Collectors.toList()));
+		Deque<EClassifier> xsdKlasses = new ArrayDeque<EClassifier>(
+				eCorePackages.stream().findFirst().get().eContents().stream()//
+						.map(o -> (EClassifier) o)//
+						.collect(Collectors.toList()));
 
 		ByteBuddy bb = new ByteBuddy();
 		typeBuilder: while (!xsdKlasses.isEmpty()) {
@@ -337,26 +314,28 @@ public class BPMNFacade {
 
 					if (feature.getUpperBound() != 1) {
 						// List
-						Generic attributeList = TypeDescription.Generic.Builder
-								.parameterizedType(List.class, attributeClass).build();
-						typeBuilder = typeBuilder
+						Generic attributeList = TypeDescription.Generic.Builder//
+								.parameterizedType(List.class, attributeClass)//
+								.build();
+						typeBuilder = typeBuilder//
 								.defineField(attributeName, attributeList,
-										net.bytebuddy.description.modifier.Visibility.PUBLIC)
+										net.bytebuddy.description.modifier.Visibility.PUBLIC)//
 								.annotateField(REQUIRED_FIELD);
 
 					} else {
 						// scalar
-						typeBuilder = typeBuilder
+						typeBuilder = typeBuilder//
 								.defineField(attributeName, attributeClass,
-										net.bytebuddy.description.modifier.Visibility.PUBLIC)
+										net.bytebuddy.description.modifier.Visibility.PUBLIC)//
 								.annotateField(REQUIRED_FIELD);
 					}
 
 				}
 			} else if (klassifier instanceof EEnum) {
 				EEnum eenum = (EEnum) klassifier;
-				typeBuilder = bb.makeEnumeration(
-						eenum.getELiterals().stream().map(e -> e.getName()).collect(Collectors.toSet()));
+				typeBuilder = bb.makeEnumeration(eenum.getELiterals().stream()//
+						.map(e -> e.getName())//
+						.collect(Collectors.toSet()));
 			} else {
 				LOGGER.debug("don't know what to do with this" + klassifier + " [DROPING]");
 				continue typeBuilder;
@@ -372,7 +351,7 @@ public class BPMNFacade {
 		return res;
 	}
 
-	public Class<?> getTypeFromMessage(TMessage message) {
+	private Class<?> getTypeFromMessage(TMessage message) {
 
 		TItemDefinition itemDef = this.getItemDef(message.getItemRef());
 		String xsdName = itemDef.getStructureRef().getLocalPart();
@@ -382,7 +361,8 @@ public class BPMNFacade {
 		return klasses.stream()
 				// .peek(System.out::println)
 				// comparison is done ignore the case, since dynamic classes are capitalized
-				.filter(k -> k.getName().equalsIgnoreCase(GENERATED_PACKAGE + xsdName)).findAny()
+				.filter(k -> k.getName().equalsIgnoreCase(GENERATED_PACKAGE + xsdName))//
+				.findAny()//
 				.orElseThrow(() -> new NoSuchElementException(xsdName));
 	}
 
@@ -435,10 +415,11 @@ public class BPMNFacade {
 	}
 
 	private Optional<TChoreographyTask> findDualTask(TChoreographyTask task) {
-		return this.getChoreographyTasks().stream().filter(t -> t.getMessageFlowRef().size() == 1)
-				.filter(t -> t.getParticipantRef().size() == 2)
+		return this.getChoreographyTasks().stream() //
+				.filter(t -> t.getMessageFlowRef().size() == 1)//
+				.filter(t -> t.getParticipantRef().size() == 2)//
 				.filter(t -> t.getParticipantRef().get(0).equals(task.getParticipantRef().get(1))
-						&& t.getParticipantRef().get(1).equals(task.getParticipantRef().get(0)))
+						&& t.getParticipantRef().get(1).equals(task.getParticipantRef().get(0)))//
 				.findAny();
 
 	}
@@ -456,36 +437,52 @@ public class BPMNFacade {
 	}
 
 	private List<Class<?>> getMessageTypes(TChoreographyTask task) {
-		return task.getMessageFlowRef().stream().map(m -> this.getMessage(this.getMessageFlow(m).getMessageRef()))
-				.map(m -> this.getTypeFromMessage(m)).collect(Collectors.toList());
+		return task.getMessageFlowRef().stream()//
+				.map(m -> this.getMessage(this.getMessageFlow(m).getMessageRef()))//
+				.map(m -> this.getTypeFromMessage(m))//
+				.collect(Collectors.toList());
 	}
 
 	private List<TChoreographyTask> getTaskWithIncommingMessageForParticipant(String participantName) {
-		return this.getChoreographyTasks().stream()
-				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))
+		return this.getChoreographyTasks().stream()//
+				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))//
 				.collect(Collectors.toList());
 	}
 
 	private OpenAPI getDefaultOAI(String participantName) {
-		return new OpenAPI().info(getDefaultInfo().title(participantName));
+		return new OpenAPI()//
+				.info(getDefaultInfo()//
+						.title(participantName));
 	}
 
 	private Info getDefaultInfo() {
-		return new Info().contact(new Contact().email("nicolas.herbaut@univ-paris1.fr").name("Nicolas Herbaut")
-				.url("https://nextnet.top")).version("1.0.0");
+		return new Info()//
+				.contact(new Contact()//
+						.email("nicolas.herbaut@univ-paris1.fr")//
+						.name("Nicolas Herbaut")//
+						.url("https://nextnet.top"))
+				.version("1.0.0");
 	}
 
 	private void addResponse(Operation op, PathItem item, Class<?> outGoingMessageType) {
-		ApiResponse response = new ApiResponse().description("200").content(new Content().addMediaType(
-				"application/json",
-				new MediaType().schema(new Schema().$ref("#/components/schemas/" + outGoingMessageType.getName()))));
-		op.responses(new ApiResponses().addApiResponse("200", response));
+		ApiResponse response = new ApiResponse()//
+				.description("200")//
+				.content(new Content()//
+						.addMediaType("application/json", new MediaType()//
+								.schema(new Schema<>()//
+										.$ref("#/components/schemas/" + outGoingMessageType.getName()))));
+		op.responses(new ApiResponses()//
+				.addApiResponse("200", response));
 		item.post(op);
 	}
 
 	private void addRequest(Operation op, Class<?> klass) {
-		RequestBody request = new RequestBody().required(true).content(new Content().addMediaType("application/json",
-				new MediaType().schema(new Schema().$ref("#/components/schemas/" + klass.getName()))));
+		RequestBody request = new RequestBody()//
+				.required(true)//
+				.content(new Content()//
+						.addMediaType("application/json", new MediaType()//
+								.schema(new Schema<>()//
+										.$ref("#/components/schemas/" + klass.getName()))));
 		op.requestBody(request);
 	}
 
@@ -494,10 +491,12 @@ public class BPMNFacade {
 	}
 
 	private static String prettyEndpoint(String s) {
-		return Arrays.stream(s.split(" ")).peek(BPMNFacade::capitalize).collect(Collectors.joining());
+		return Arrays.stream(s.split(" "))//
+				.peek(BPMNFacade::capitalize)//
+				.collect(Collectors.joining());
 	}
 
-	public static ObjectMapper getObjectMapper() {
+	private static ObjectMapper getObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 
 		mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
@@ -518,7 +517,6 @@ public class BPMNFacade {
 					.toFile();
 			try (FileWriter writer = new FileWriter(destination)) {
 				writer.write(toYaml(oai));
-				LOGGER.debug("file {} written", destination);
 				res.add(destination);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
