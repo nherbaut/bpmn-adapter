@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -231,29 +230,41 @@ public class BPMNFacade {
 	private <T extends TBaseElement> Stream<T> getDefinitionElements(Class<T> klass) {
 		return definitions.getRootElement().stream()//
 				.map(e -> e.getValue()) //
-				.filter(e -> klass.isInstance(e)).map(e -> klass.cast(e));
+				.filter(e -> klass.isInstance(e))//
+				.map(e -> klass.cast(e));
 	}
 
 	private TMessage getMessage(QName qname) {
+		if (qname == null) {
+			return new TMessage();
+		}
 		return this.getDefinitionElements(TMessage.class)//
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
-				.findFirst().orElseThrow(NoSuchElementException::new);
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()) || qname.getLocalPart().equals(m.getId()))//
+				.findFirst()//
+				// .orElseThrow(() -> new NoSuchElementException(qname.toString()));
+				.orElse(null);
 	}
 
 	private TMessageFlow getMessageFlow(QName qname) {
+		if (qname == null) {
+			return new TMessageFlow();
+		}
 		return this.getChoreography().getMessageFlow().stream()//
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()) || qname.getLocalPart().equals(m.getId()))//
 				.findFirst()//
-				.orElseThrow(() -> new NoSuchElementException(qname.toString()));
+				// .orElseThrow(() -> new NoSuchElementException(qname.toString()));
+				.orElse(null);
 	}
 
-	
-
 	private TItemDefinition getItemDef(QName qname) {
+		if (qname == null) {
+			return new TItemDefinition();
+		}
 		return this.getDefinitionElements(TItemDefinition.class)//
-				.filter(m -> qname.getLocalPart().equals("#" + m.getId()))//
+				.filter(m -> qname.getLocalPart().equals("#" + m.getId()) || qname.getLocalPart().equals(m.getId()))//
 				.findFirst()//
-				.orElseThrow(NoSuchElementException::new);
+				// .orElseThrow(() -> new NoSuchElementException(qname.toString()));
+				.orElse(null);
 	}
 
 	private static final String GENERATED_PACKAGE = "";
@@ -354,6 +365,10 @@ public class BPMNFacade {
 	private Class<?> getTypeFromMessage(TMessage message) {
 
 		TItemDefinition itemDef = this.getItemDef(message.getItemRef());
+		if (itemDef == null || itemDef.getStructureRef() == null) {
+			LOGGER.warn("Message {} has no type, falling back on the default Type", message.getName());
+			return Object.class;
+		}
 		String xsdName = itemDef.getStructureRef().getLocalPart();
 
 		Collection<Class<?>> klasses = this.types
@@ -363,7 +378,7 @@ public class BPMNFacade {
 				// comparison is done ignore the case, since dynamic classes are capitalized
 				.filter(k -> k.getName().equalsIgnoreCase(GENERATED_PACKAGE + xsdName))//
 				.findAny()//
-				.orElseThrow(() -> new NoSuchElementException(xsdName));
+				.orElse(null);
 	}
 
 	public Map<TParticipant, OpenAPI> getOpenApiMap() {
