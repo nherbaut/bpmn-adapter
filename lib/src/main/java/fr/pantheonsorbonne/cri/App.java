@@ -1,25 +1,14 @@
 package fr.pantheonsorbonne.cri;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 
 import javax.xml.bind.JAXBException;
 
-import org.openapitools.codegen.ClientOptInput;
-import org.openapitools.codegen.DefaultGenerator;
-import org.openapitools.codegen.languages.AbstractJavaCodegen;
-import org.openapitools.codegen.languages.JavaJerseyServerCodegen;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
-
-import io.swagger.v3.oas.models.OpenAPI;
 
 public class App {
 
@@ -52,19 +41,11 @@ public class App {
 
 	public void run() {
 
-		createOutputDirIfNotThere();
+		
 
 		BPMNFacade diag = new BPMNFacade(this.bpmn2File);
 
-		Map<TParticipant, OpenAPI> map = diag.getOpenApiMap();
-
-		for (Map.Entry<TParticipant, OpenAPI> entry : map.entrySet()) {
-
-			String participantNameEscaped = entry.getKey().getName().replace(' ', '_');
-			OpenAPI api = entry.getValue();
-
-			writeJavaServerStubs(participantNameEscaped, api);
-		}
+		diag.writeOpenAPIArtefacts(outputDirectory);
 
 		if (writeOpenApiFiles) {
 			diag.writeOpenApi(this.outputDirectory).stream()//
@@ -72,29 +53,6 @@ public class App {
 
 		}
 
-	}
-
-	private void writeJavaServerStubs(String participantNameEscaped, OpenAPI api) {
-		ClientOptInput opts = new ClientOptInput();
-		AbstractJavaCodegen config = new JavaJerseyServerCodegen();
-		config.setOutputDir(
-				Paths.get(this.outputDirectory.getPath(), participantNameEscaped, "generated_server_stub").toString());
-		opts.config(config);
-		opts.openAPI(api);
-
-		new DefaultGenerator().opts(opts).generate();
-	}
-
-	private void createOutputDirIfNotThere() {
-		try {
-			Path outputDir = Paths.get(this.outputDirectory.toString());
-			if (!Files.exists(outputDir)) {
-				Files.createDirectories(outputDir);
-			}
-		} catch (IOException e) {
-			LOGGER.error("failed to create directory : {}", outputDirectory.toString());
-			System.exit(-1);
-		}
 	}
 
 }

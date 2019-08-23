@@ -3,11 +3,14 @@ package fr.pantheonsorbonne.cri;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +37,10 @@ import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.xsd.ecore.XSDEcoreBuilder;
+import org.openapitools.codegen.ClientOptInput;
+import org.openapitools.codegen.DefaultGenerator;
+import org.openapitools.codegen.languages.AbstractJavaCodegen;
+import org.openapitools.codegen.languages.JavaJerseyServerCodegen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -73,12 +80,13 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 
 public class BPMNFacade {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BPMNFacade.class);
-
+	private ClassLoader privateClassLoader = new ByteArrayClassLoader(this.getClass().getClassLoader(), Collections.EMPTY_MAP);
 	private static final String BPMN2_DEFINITIONS = "bpmn2:definitions";
 	private final TDefinitions definitions;
 	/**
@@ -286,13 +294,13 @@ public class BPMNFacade {
 		ByteBuddy bb = new ByteBuddy();
 		typeBuilder: while (!xsdKlasses.isEmpty()) {
 
-			LOGGER.trace("### " + xsdKlasses.size() + " to GO!");
+			LOGGER.debug("### " + xsdKlasses.size() + " to GO!");
 
 			EClassifier klassifier = xsdKlasses.poll();
 			if (klassifier.getName().equals("DocumentRoot")) {
 				continue;
 			}
-			LOGGER.trace("trying to generate dynamic type for " + klassifier.getName());
+			LOGGER.debug("trying to generate dynamic type for " + klassifier.getName());
 			DynamicType.Builder<?> typeBuilder = null;
 
 			if (klassifier instanceof EClass) {
@@ -308,14 +316,14 @@ public class BPMNFacade {
 					if (attributeClass == null) {
 						// can be a complex type, not sure if defined...
 						try {
-							attributeClass = Class.forName(GENERATED_PACKAGE + feature.getEType().getName());
+							attributeClass = Class.forName(GENERATED_PACKAGE + feature.getEType().getName(),true,this.privateClassLoader);
 						} catch (ClassNotFoundException e) {
 							attributeClass = null;
 						}
 
 						if (attributeClass == null) {
 							// type not already defined in the classloader
-							LOGGER.trace("missing type" + feature.getEType().getName()
+							LOGGER.debug("missing type" + feature.getEType().getName()
 									+ ", deferring complex type creation");
 							xsdKlasses.addLast(klassifier);
 							continue typeBuilder;
@@ -354,7 +362,7 @@ public class BPMNFacade {
 
 			typeBuilder = typeBuilder.name(GENERATED_PACKAGE + klassifier.getName());
 			Class<?> xsdType = typeBuilder.make()
-					.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
+					.load(privateClassLoader, ClassLoadingStrategy.Default.INJECTION).getLoaded();
 			res.add(xsdType);
 
 		}
@@ -466,11 +474,12 @@ public class BPMNFacade {
 
 	private List<TChoreographyTask> getTaskWithIncommingMessageForParticipant(String participantName) {
 		return this.getChoreographyTasks().stream()//
-				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals("#"+participantName) &&  !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))//
+				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals("#" + participantName)
+						&& !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))//
 				.filter(t -> t.getParticipantRef().stream()//
 						.map(q -> q.getLocalPart())//
-						//.peek(System.out::println)//
-						.collect(Collectors.toSet()).contains("#"+participantName))
+						// .peek(System.out::println)//
+						.collect(Collectors.toSet()).contains("#" + participantName))
 				.collect(Collectors.toList());
 	}
 
@@ -562,5 +571,41 @@ public class BPMNFacade {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	public void writeOpenAPIArtefacts(File outputDirectory) {
+		createOutputDirIfNotThere(outputDirectory);
+		Map<TParticipant, OpenAPI> map = this.getOpenApiMap();
+
+		for (Map.Entry<TParticipant, OpenAPI> entry : map.entrySet()) {
+
+			String participantNameEscaped = entry.getKey().getName().replace(' ', '_');
+			OpenAPI api = entry.getValue();
+
+			writeJavaServerStubs(participantNameEscaped, api, outputDirectory);
+		}
+	}
+
+	private void writeJavaServerStubs(String participantNameEscaped, OpenAPI api, File outputDirectory) {
+		ClientOptInput opts = new ClientOptInput();
+		AbstractJavaCodegen config = new JavaJerseyServerCodegen();
+		config.setOutputDir(
+				Paths.get(outputDirectory.getPath(), participantNameEscaped, "generated_server_stub").toString());
+		opts.config(config);
+		opts.openAPI(api);
+
+		new DefaultGenerator().opts(opts).generate();
+	}
+
+	private void createOutputDirIfNotThere(File outputDirectory) {
+		try {
+			Path outputDir = Paths.get(outputDirectory.toString());
+			if (!Files.exists(outputDir)) {
+				Files.createDirectories(outputDir);
+			}
+		} catch (IOException e) {
+			LOGGER.error("failed to create directory : {}", outputDirectory.toString());
+			System.exit(-1);
+		}
 	}
 }
