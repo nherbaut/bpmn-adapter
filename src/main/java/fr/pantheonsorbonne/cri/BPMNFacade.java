@@ -389,7 +389,7 @@ public class BPMNFacade {
 			LOGGER.trace("for participant {}", participantName);
 			OpenAPI oai = getDefaultOAI(participantName);
 			List<TChoreographyTask> tasksWithIncommingMessages = getTaskWithIncommingMessageForParticipant(
-					participantName);
+					participant.getId());
 
 			io.swagger.v3.oas.models.Paths paths = new io.swagger.v3.oas.models.Paths();
 			oai.paths(paths);
@@ -401,25 +401,27 @@ public class BPMNFacade {
 
 				Class<?> incommingMessageType = null;
 				Class<?> outGoingMessageType = null;
+
+				incommingMessageType = klasses.get(0);
+
 				if (klasses.size() == 2) {
-					incommingMessageType = klasses.get(0);
+
 					outGoingMessageType = klasses.get(1);
 
 				} else {
 
 					Optional<TChoreographyTask> dual = this.findDualTask(task);
+					// we need to find which task is the dual for this one
 					if (dual.isPresent()) {
-						incommingMessageType = klasses.get(0);
+
 						outGoingMessageType = getMessageTypes(dual.get()).get(0);
+					} else {
+						LOGGER.warn("Fail to generate proper conversation in {} ", taskName);
 					}
 
-					// we need to find which task is the dual for this one
-
 				}
 
-				if (incommingMessageType != null && outGoingMessageType != null) {
-					populatePath(paths, taskName, incommingMessageType, outGoingMessageType);
-				}
+				populatePath(paths, taskName, incommingMessageType, outGoingMessageType);
 
 			}
 			oai.components(this.getComponents());
@@ -447,8 +449,12 @@ public class BPMNFacade {
 		paths.addPathItem(endpointName, item);
 		item.description(taskName);
 
-		addRequest(op, incommingMessageType);
-		addResponse(op, item, outGoingMessageType);
+		if (incommingMessageType != null) {
+			addRequest(op, incommingMessageType);
+		}
+		if (outGoingMessageType != null) {
+			addResponse(op, item, outGoingMessageType);
+		}
 	}
 
 	private List<Class<?>> getMessageTypes(TChoreographyTask task) {
@@ -460,7 +466,11 @@ public class BPMNFacade {
 
 	private List<TChoreographyTask> getTaskWithIncommingMessageForParticipant(String participantName) {
 		return this.getChoreographyTasks().stream()//
-				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))//
+				.filter(t -> !t.getInitiatingParticipantRef().getLocalPart().equals("#"+participantName) &&  !t.getInitiatingParticipantRef().getLocalPart().equals(participantName))//
+				.filter(t -> t.getParticipantRef().stream()//
+						.map(q -> q.getLocalPart())//
+						//.peek(System.out::println)//
+						.collect(Collectors.toSet()).contains("#"+participantName))
 				.collect(Collectors.toList());
 	}
 
