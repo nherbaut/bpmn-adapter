@@ -17,11 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 public class BPMNController {
 
-	@GetMapping("/greeting")
+	@GetMapping("/")
 	public String greeting(@RequestParam(name = "name", required = false, defaultValue = "World") String name,
 			Model model) {
 		model.addAttribute("name", name);
-		return "greeting";
+		return "index";
 	}
 
 	@PostMapping(value = "/bpmn", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

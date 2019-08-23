@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>BPMN2 Choreography to OpenAPI Server Stubs</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+
+	<p>With this button, you can upload a zip file containing a BPMN2
+		diagram with external XSD types. Our algorithm will translate the
+		diagram to microservice server stubs in Java.</p>
+	<p>
+		You can try the service with the <a href="choreo.zip">provided
+			file</a> to give it a spin
+	</p>
+	<p>Since we run on low-budget virtualized public cloud instances,
+		processing can take up to 1 min for a regular file</p>
+
+	<form action="bpmn" method="post" enctype="multipart/form-data">
+		<input name="file" type="file" /> <input type="submit"
+			value="Generate Microservices" />
+	</form>
+</body>
+</html>
