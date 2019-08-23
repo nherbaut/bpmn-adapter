@@ -8,11 +8,11 @@
         </layout>
     </appender>
 
-    <logger name="fr.pantheonsorbonne" level="trace" additivity="false">
+    <logger name="fr.pantheonsorbonne" level="debug" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 
-    <root level="trace">
+    <root level="error">
         <appender-ref ref="CONSOLE"/>
     </root>
 
