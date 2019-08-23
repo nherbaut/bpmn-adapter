@@ -1,0 +1,1185 @@
+{
+	"openapi": "3.0.1",
+	"info": {
+		"title": "Mobility Information Planner",
+		"contact": {
+			"name": "Nicolas Herbaut",
+			"url": "https://nextnet.top",
+			"email": "nicolas.herbaut@univ-paris1.fr"
+		},
+		"version": "1.0.0"
+	},
+	"paths": {
+		"/GetMobilityInformation": {
+			"description": "Get Mobility Information",
+			"post": {
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/GetMobilityInfoRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "200",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetMobilityInfoResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"GetTourismInfoRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					}
+				}
+			},
+			"LatestNewsRequest": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string"
+					},
+					"lat": {
+						"type": "number"
+					},
+					"lon": {
+						"type": "number"
+					}
+				}
+			},
+			"LatestPTRequest": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string"
+					}
+				}
+			},
+			"Modes": {
+				"type": "string",
+				"enum": [
+					"Walk",
+					"PublicTransport",
+					"Car",
+					"Bicycle"
+				]
+			},
+			"NewsType": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"startDate": {
+						"type": "integer",
+						"format": "utc-millisec"
+					},
+					"endDate": {
+						"type": "integer",
+						"format": "utc-millisec"
+					}
+				}
+			},
+			"ParkingRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					}
+				}
+			},
+			"ParkingType": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"operator": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"lat": {
+						"type": "number"
+					},
+					"lon": {
+						"type": "number"
+					},
+					"capacity": {
+						"type": "integer"
+					},
+					"freeSlots": {
+						"type": "integer"
+					},
+					"tariffs": {
+						"type": "string"
+					}
+				}
+			},
+			"PoiRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					},
+					"type": {
+						"type": "integer"
+					}
+				}
+			},
+			"PoiType": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"lat": {
+						"type": "number"
+					},
+					"lon": {
+						"type": "number"
+					}
+				}
+			},
+			"SegmentType": {
+				"type": "object",
+				"properties": {
+					"distance": {
+						"type": "integer"
+					},
+					"duration": {
+						"type": "integer"
+					},
+					"transportType": {
+						"type": "string",
+						"enum": [
+							"Walk",
+							"PublicTransport",
+							"Car",
+							"Bicycle"
+						]
+					},
+					"manouevres": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"dropInNode": {
+						"type": "string"
+					},
+					"dropOffNode": {
+						"type": "string"
+					},
+					"line": {
+						"type": "string"
+					},
+					"vehicleDirection": {
+						"type": "string"
+					}
+				}
+			},
+			"TrafficRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					},
+					"type": {
+						"type": "string"
+					}
+				}
+			},
+			"TrafficType": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"lat": {
+						"type": "number"
+					},
+					"lon": {
+						"type": "number"
+					},
+					"description": {
+						"type": "string"
+					},
+					"startDate": {
+						"type": "integer",
+						"format": "utc-millisec"
+					},
+					"endDate": {
+						"type": "integer",
+						"format": "utc-millisec"
+					}
+				}
+			},
+			"TripsRequest": {
+				"type": "object",
+				"properties": {
+					"fromLat": {
+						"type": "number"
+					},
+					"fromLon": {
+						"type": "number"
+					},
+					"toLat": {
+						"type": "number"
+					},
+					"toLon": {
+						"type": "number"
+					},
+					"transportMode": {
+						"type": "string",
+						"enum": [
+							"Walk",
+							"PublicTransport",
+							"Car",
+							"Bicycle"
+						]
+					},
+					"startAt": {
+						"type": "integer",
+						"format": "utc-millisec"
+					},
+					"endAt": {
+						"type": "integer",
+						"format": "utc-millisec"
+					}
+				}
+			},
+			"TripsType": {
+				"type": "object",
+				"properties": {
+					"distance": {
+						"type": "integer"
+					},
+					"duration": {
+						"type": "integer"
+					},
+					"segments": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"distance": {
+									"type": "integer"
+								},
+								"duration": {
+									"type": "integer"
+								},
+								"transportType": {
+									"type": "string",
+									"enum": [
+										"Walk",
+										"PublicTransport",
+										"Car",
+										"Bicycle"
+									]
+								},
+								"manouevres": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"dropInNode": {
+									"type": "string"
+								},
+								"dropOffNode": {
+									"type": "string"
+								},
+								"line": {
+									"type": "string"
+								},
+								"vehicleDirection": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"WeatherItemsRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					}
+				}
+			},
+			"WeatherType": {
+				"type": "object",
+				"properties": {
+					"temperature": {
+						"type": "number"
+					},
+					"humidity": {
+						"type": "integer"
+					},
+					"lat": {
+						"type": "number"
+					},
+					"lon": {
+						"type": "number"
+					},
+					"pressure": {
+						"type": "number"
+					},
+					"windSpeed": {
+						"type": "number"
+					},
+					"rain": {
+						"type": "number"
+					}
+				}
+			},
+			"GetMobilityInfoRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					},
+					"fromLat": {
+						"type": "number"
+					},
+					"fromLon": {
+						"type": "number"
+					},
+					"toLat": {
+						"type": "number"
+					},
+					"toLon": {
+						"type": "number"
+					},
+					"transportMode": {
+						"type": "string",
+						"enum": [
+							"Walk",
+							"PublicTransport",
+							"Car",
+							"Bicycle"
+						]
+					}
+				}
+			},
+			"GetTourismInfoResponse": {
+				"type": "object",
+				"properties": {
+					"weatherStations": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"temperature": {
+									"type": "number"
+								},
+								"humidity": {
+									"type": "integer"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"pressure": {
+									"type": "number"
+								},
+								"windSpeed": {
+									"type": "number"
+								},
+								"rain": {
+									"type": "number"
+								}
+							}
+						}
+					},
+					"pois": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								}
+							}
+						}
+					},
+					"events": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			},
+			"GetTouristicGuideRequest": {
+				"type": "object",
+				"properties": {
+					"upperRightLat": {
+						"type": "number"
+					},
+					"upperRightLon": {
+						"type": "number"
+					},
+					"lowerLeftLat": {
+						"type": "number"
+					},
+					"lowerLeftLon": {
+						"type": "number"
+					},
+					"fromLat": {
+						"type": "number"
+					},
+					"fromLon": {
+						"type": "number"
+					},
+					"toLat": {
+						"type": "number"
+					},
+					"toLon": {
+						"type": "number"
+					},
+					"transportMode": {
+						"type": "string",
+						"enum": [
+							"Walk",
+							"PublicTransport",
+							"Car",
+							"Bicycle"
+						]
+					}
+				}
+			},
+			"LatestNewsResponse": {
+				"type": "object",
+				"properties": {
+					"events": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			},
+			"LatestPTResponse": {
+				"type": "object",
+				"properties": {
+					"publicTransportNews": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			},
+			"ParkingResponse": {
+				"type": "object",
+				"properties": {
+					"parkings": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"operator": {
+									"type": "string"
+								},
+								"type": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"capacity": {
+									"type": "integer"
+								},
+								"freeSlots": {
+									"type": "integer"
+								},
+								"tariffs": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"PoiResponse": {
+				"type": "object",
+				"properties": {
+					"pois": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								}
+							}
+						}
+					}
+				}
+			},
+			"TrafficResponse": {
+				"type": "object",
+				"properties": {
+					"trafficInfos": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			},
+			"TripsResponse": {
+				"type": "object",
+				"properties": {
+					"from": {
+						"type": "string"
+					},
+					"to": {
+						"type": "string"
+					},
+					"trips": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"distance": {
+									"type": "integer"
+								},
+								"duration": {
+									"type": "integer"
+								},
+								"segments": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"distance": {
+												"type": "integer"
+											},
+											"duration": {
+												"type": "integer"
+											},
+											"transportType": {
+												"type": "string",
+												"enum": [
+													"Walk",
+													"PublicTransport",
+													"Car",
+													"Bicycle"
+												]
+											},
+											"manouevres": {
+												"type": "array",
+												"items": {
+													"type": "string"
+												}
+											},
+											"dropInNode": {
+												"type": "string"
+											},
+											"dropOffNode": {
+												"type": "string"
+											},
+											"line": {
+												"type": "string"
+											},
+											"vehicleDirection": {
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"WeatherItemsResponse": {
+				"type": "object",
+				"properties": {
+					"weatherStations": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"temperature": {
+									"type": "number"
+								},
+								"humidity": {
+									"type": "integer"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"pressure": {
+									"type": "number"
+								},
+								"windSpeed": {
+									"type": "number"
+								},
+								"rain": {
+									"type": "number"
+								}
+							}
+						}
+					}
+				}
+			},
+			"GetMobilityInfoResponse": {
+				"type": "object",
+				"properties": {
+					"trip": {
+						"type": "object",
+						"properties": {
+							"from": {
+								"type": "string"
+							},
+							"to": {
+								"type": "string"
+							},
+							"trips": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"distance": {
+											"type": "integer"
+										},
+										"duration": {
+											"type": "integer"
+										},
+										"segments": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"distance": {
+														"type": "integer"
+													},
+													"duration": {
+														"type": "integer"
+													},
+													"transportType": {
+														"type": "string",
+														"enum": [
+															"Walk",
+															"PublicTransport",
+															"Car",
+															"Bicycle"
+														]
+													},
+													"manouevres": {
+														"type": "array",
+														"items": {
+															"type": "string"
+														}
+													},
+													"dropInNode": {
+														"type": "string"
+													},
+													"dropOffNode": {
+														"type": "string"
+													},
+													"line": {
+														"type": "string"
+													},
+													"vehicleDirection": {
+														"type": "string"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"parkings": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"operator": {
+									"type": "string"
+								},
+								"type": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"capacity": {
+									"type": "integer"
+								},
+								"freeSlots": {
+									"type": "integer"
+								},
+								"tariffs": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"trafficInfos": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					},
+					"publicTransportInfo": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			},
+			"GetTouristicGuideResponse": {
+				"type": "object",
+				"properties": {
+					"trip": {
+						"type": "object",
+						"properties": {
+							"from": {
+								"type": "string"
+							},
+							"to": {
+								"type": "string"
+							},
+							"trips": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"distance": {
+											"type": "integer"
+										},
+										"duration": {
+											"type": "integer"
+										},
+										"segments": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"distance": {
+														"type": "integer"
+													},
+													"duration": {
+														"type": "integer"
+													},
+													"transportType": {
+														"type": "string",
+														"enum": [
+															"Walk",
+															"PublicTransport",
+															"Car",
+															"Bicycle"
+														]
+													},
+													"manouevres": {
+														"type": "array",
+														"items": {
+															"type": "string"
+														}
+													},
+													"dropInNode": {
+														"type": "string"
+													},
+													"dropOffNode": {
+														"type": "string"
+													},
+													"line": {
+														"type": "string"
+													},
+													"vehicleDirection": {
+														"type": "string"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"parkings": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"operator": {
+									"type": "string"
+								},
+								"type": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"capacity": {
+									"type": "integer"
+								},
+								"freeSlots": {
+									"type": "integer"
+								},
+								"tariffs": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"trafficInfos": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					},
+					"publicTransportInfo": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					},
+					"weatherStations": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"temperature": {
+									"type": "number"
+								},
+								"humidity": {
+									"type": "integer"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								},
+								"pressure": {
+									"type": "number"
+								},
+								"windSpeed": {
+									"type": "number"
+								},
+								"rain": {
+									"type": "number"
+								}
+							}
+						}
+					},
+					"pois": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"lat": {
+									"type": "number"
+								},
+								"lon": {
+									"type": "number"
+								}
+							}
+						}
+					},
+					"events": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"startDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								},
+								"endDate": {
+									"type": "integer",
+									"format": "utc-millisec"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

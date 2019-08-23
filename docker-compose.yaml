@@ -1,0 +1,20 @@
+version: "3"
+services:
+  web:
+    # replace username/repo:tag with your name and image details
+    image:  nherbaut/bpmn-openapi-adapter:latest
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0."
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8484:8080"
+    networks:
+      - webnet
+networks:
+  webnet:
+
