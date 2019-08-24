@@ -6,15 +6,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		  <groupId>fr.pantheonsorbonne.cri.bpmn</groupId>
-        <artifactId>bpmn-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+		<groupId>fr.pantheonsorbonne.cri.bpmn</groupId>
+		<artifactId>bpmn-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
 
 	</parent>
 
 	<artifactId>openapi-facade</artifactId>
 
-	
+
 
 
 
@@ -161,7 +161,9 @@
 				defaults (may be moved to parent pom) -->
 
 			<plugins>
-
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>build-helper-maven-plugin</artifactId>
@@ -192,15 +194,7 @@
 					<artifactId>maven-resources-plugin</artifactId>
 					<version>3.0.2</version>
 				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.1</version>
-					<configuration>
-						<source>${maven.compiler.target}</source>
-						<target>${maven.compiler.target}</target>
-					</configuration>
-				</plugin>
+
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M3</version>

@@ -80,13 +80,15 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.DynamicType.Loaded;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 
 public class BPMNFacade {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BPMNFacade.class);
-	private ClassLoader privateClassLoader = new ByteArrayClassLoader(this.getClass().getClassLoader(), Collections.EMPTY_MAP);
+	private ClassLoader privateClassLoader = new ByteArrayClassLoader(this.getClass().getClassLoader(),
+			Collections.EMPTY_MAP);
 	private static final String BPMN2_DEFINITIONS = "bpmn2:definitions";
 	private final TDefinitions definitions;
 	/**
@@ -315,11 +317,9 @@ public class BPMNFacade {
 
 					if (attributeClass == null) {
 						// can be a complex type, not sure if defined...
-						try {
-							attributeClass = Class.forName(GENERATED_PACKAGE + feature.getEType().getName(),true,this.privateClassLoader);
-						} catch (ClassNotFoundException e) {
-							attributeClass = null;
-						}
+
+						attributeClass = res.stream().filter(c -> c.getName().equals(feature.getEType().getName()))
+								.findFirst().orElse(null);
 
 						if (attributeClass == null) {
 							// type not already defined in the classloader
@@ -361,9 +361,13 @@ public class BPMNFacade {
 			}
 
 			typeBuilder = typeBuilder.name(GENERATED_PACKAGE + klassifier.getName());
-			Class<?> xsdType = typeBuilder.make()
-					.load(privateClassLoader, ClassLoadingStrategy.Default.INJECTION).getLoaded();
-			res.add(xsdType);
+			Loaded<?> xsdType = typeBuilder.make().load(privateClassLoader,
+					ClassLoadingStrategy.Default.WRAPPER_PERSISTENT);
+
+			// update classLoader with new type
+			privateClassLoader = xsdType.getLoaded().getClassLoader();
+
+			res.add(xsdType.getLoaded());
 
 		}
 
