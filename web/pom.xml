@@ -56,6 +56,12 @@
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
 
+		<dependency>
+			<groupId>fr.pantheonsorbonne.cri.bpmn</groupId>
+			<artifactId>grpc-facade</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+
 	</dependencies>
 
 	<properties>

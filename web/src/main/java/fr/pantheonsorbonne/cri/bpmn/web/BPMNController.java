@@ -4,6 +4,8 @@ import java.io.File;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -16,6 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 public class BPMNController {
+	
+
+
 
 	@GetMapping("/")
 	public String greeting(@RequestParam(name = "name", required = false, defaultValue = "World") String name,

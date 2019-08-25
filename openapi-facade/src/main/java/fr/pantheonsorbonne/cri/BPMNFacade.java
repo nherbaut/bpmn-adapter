@@ -618,7 +618,7 @@ public class BPMNFacade {
 		ClientOptInput opts = new ClientOptInput();
 		AbstractJavaCodegen config = new JavaJerseyServerCodegen();
 		config.setOutputDir(
-				Paths.get(outputDirectory.getPath(), participantNameEscaped, "generated_server_stub").toString());
+				Paths.get(outputDirectory.getPath(), participantNameEscaped, "REST_server_stub").toString());
 		opts.config(config);
 		opts.openAPI(api);
 

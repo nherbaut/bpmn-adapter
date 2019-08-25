@@ -18,25 +18,23 @@ import com.google.common.io.Files;
  */
 public class GRPCFacade {
 
-	
 	private final static Logger LOGGER = LoggerFactory.getLogger(GRPCFacade.class);
-	private final File gnosticPath;
-	private final File protocPath;
-	private final File goHome;
-
-	public GRPCFacade(File gnosticPath, File protocPath, File goHome) {
-		this.gnosticPath=gnosticPath;
-		this.protocPath=protocPath;
-		this.goHome=goHome;
+	private final String goPath = System.getenv("GOPATH");
+	
+	private File openAPISpec;
+	
+	public GRPCFacade(File openAPISpec) {
+		this.openAPISpec=openAPISpec;
 	}
-	public File generateGRPC(File openAPISpec) {
+
+	public File generateGRPC() {
 
 		Process process = null;
 		try {
 			String apiSpecFile = openAPISpec.getName();
 			File apiSpecFileDir = openAPISpec.getParentFile();
 			File outputDir = Files.createTempDir();
-			File grpcOutput = Paths.get(outputDir.getAbsolutePath(), "grpc_stubs").toFile();
+			File grpcOutput = Paths.get(outputDir.getAbsolutePath(), "grpc_server_stub").toFile();
 			grpcOutput.mkdirs();
 			File targetProtoFile = Paths
 					.get(outputDir.toString(),
@@ -44,7 +42,7 @@ public class GRPCFacade {
 					.toFile();
 			{
 
-				ProcessBuilder pb = new ProcessBuilder(this.gnosticPath.toString(), //
+				ProcessBuilder pb = new ProcessBuilder("gnostic", //
 						"--grpc-out=" + outputDir.getAbsolutePath(), //
 						apiSpecFile).inheritIO();
 				pb.directory(apiSpecFileDir);
@@ -62,10 +60,11 @@ public class GRPCFacade {
 			}
 
 			{
-				ProcessBuilder pb = new ProcessBuilder(protocPath.toString(), //
+				ProcessBuilder pb = new ProcessBuilder("protoc", //
 						"-I" + outputDir, //
 						"-I" + ".", //
-						"-I" + Paths.get(this.goHome.toString(), "src","github.com","grpc-ecosystem","grpc-gateway","third_party","googleapis").toString(), //
+						"-I" + Paths.get(goPath, "src", "github.com", "grpc-ecosystem", "grpc-gateway", "third_party",
+								"googleapis").toString(), //
 						"--java_out=" + grpcOutput, //
 						targetProtoFile.getAbsolutePath()).inheritIO();
 				pb.directory(apiSpecFileDir);

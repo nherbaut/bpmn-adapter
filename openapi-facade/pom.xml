@@ -25,10 +25,10 @@
 
 	<dependencies>
 		<dependency>
-  <groupId>com.github.reinert</groupId>
-  <artifactId>jjschema</artifactId>
-  <version>1.16</version>
-</dependency>
+			<groupId>com.github.reinert</groupId>
+			<artifactId>jjschema</artifactId>
+			<version>1.16</version>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
@@ -99,7 +99,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.0-jre</version>
+
 
 		</dependency>
 
@@ -137,13 +137,13 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
+
 		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.28</version>
+
 		</dependency>
 
 		<dependency>
@@ -264,7 +264,7 @@
 			<plugin>
 
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.1.1</version>
+
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
