@@ -63,6 +63,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 import com.fasterxml.jackson.module.jsonSchema.factories.VisitorContext;
+import com.google.common.collect.Streams;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -98,6 +99,7 @@ public class BPMNFacade {
 			Collections.EMPTY_MAP);
 	private static final String BPMN2_DEFINITIONS = "bpmn2:definitions";
 	private final TDefinitions definitions;
+	private final ObjectMapper objectMapper = getObjectMapper();
 	/**
 	 * Contains the namespace for external types of the BPMN2 file
 	 */
@@ -132,13 +134,13 @@ public class BPMNFacade {
 		Components components = new Components();
 		var schemaFactoryWrapper = new SchemaFactoryWrapper();
 		schemaFactoryWrapper.setVisitorContext(new VisitorContext() {
-			
+
 			@Override
-			 public String javaTypeToUrn(JavaType jt) {
-			        return  jt.toCanonical().replace('.', ':').replace('$', ':');
-			    }
+			public String javaTypeToUrn(JavaType jt) {
+				return jt.toCanonical().replace('.', ':').replace('$', ':');
+			}
 		});
-		var schemaGenerator = new JsonSchemaGenerator(getObjectMapper(),schemaFactoryWrapper);
+		var schemaGenerator = new JsonSchemaGenerator(objectMapper, schemaFactoryWrapper);
 
 		try {
 
@@ -146,16 +148,22 @@ public class BPMNFacade {
 				for (Class<?> klass : type.getValue()) {
 
 					var jsonSchema = schemaGenerator.generateSchema(klass);
-					var jsonSchemaStr = this.getObjectMapper().writerWithDefaultPrettyPrinter()
-							.writeValueAsString(jsonSchema);
+					var jsonSchemaStr = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonSchema);
 
-					LOGGER.debug("Schema for klass : {} is \n {}",klass.getName(),jsonSchemaStr);
+					LOGGER.debug("Json Schema for klass : {} is \n {}", klass.getName(), jsonSchemaStr);
 
 					// parse the schema as json
 					var objectNode = new ObjectMapper().readValue(jsonSchemaStr, ObjectNode.class);
+					
+					// do some ad-hoc fixes
+					prumeObjectRefFields(objectNode);
+					
+					// objectNode.
+					Streams.stream(objectNode.fields()).forEach(entry -> entry.getKey());
 
 					// use the unsealed Deserializer to generate the schema
 					var schema = new OpenAPIDeserializer2().getSchema(objectNode, "");
+
 					components.addSchemas(klass.getName(), schema);
 
 				}
@@ -167,6 +175,27 @@ public class BPMNFacade {
 		}
 
 		return components;
+
+	}
+
+	/**
+	 * OpenAPI doesn't prune object field's containing both types and $ref, which is
+	 * valid in draft3 but not in openapi schema. This method visit the JsonObject
+	 * and remove the type fields when there's a $ref present
+	 * 
+	 * @param entry
+	 */
+	private static void prumeObjectRefFields(ObjectNode entry) {
+
+		if (entry.get("type") != null && entry.get("$ref") != null) {
+			entry.remove("type");
+		}
+		var itr = entry.fields();
+		while (itr.hasNext()) {
+			var item = itr.next();
+			if (item.getValue() instanceof ObjectNode)
+				prumeObjectRefFields((ObjectNode) item.getValue());
+		}
 
 	}
 
@@ -391,6 +420,7 @@ public class BPMNFacade {
 		Map<TParticipant, OpenAPI> res = new HashMap<TParticipant, OpenAPI>();
 
 		for (TParticipant participant : this.getChoreography().getParticipant()) {
+			var componentClasses = new ArrayList<Class<?>>();
 			String participantName = participant.getName();
 			LOGGER.trace("for participant {}", participantName);
 			OpenAPI oai = getDefaultOAI(participantName);
@@ -528,7 +558,7 @@ public class BPMNFacade {
 				.collect(Collectors.joining());
 	}
 
-	private static ObjectMapper getObjectMapper() {
+	private ObjectMapper getObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 
 		mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
@@ -548,7 +578,7 @@ public class BPMNFacade {
 			File destination = Paths.get(outputDir.toString(), participant.getName().replace(' ', '_') + ".yaml")
 					.toFile();
 			try (FileWriter writer = new FileWriter(destination)) {
-				writer.write(toYaml(oai));
+				writer.write(this.toYaml(oai));
 				res.add(destination);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -558,11 +588,11 @@ public class BPMNFacade {
 
 	}
 
-	private static String toYaml(OpenAPI api) {
+	private String toYaml(OpenAPI api) {
 		try {
-			ObjectMapper mapper = getObjectMapper();
-			String oaiString = mapper.writer(new DefaultPrettyPrinter()).writeValueAsString(api);
-			JsonNode jsonNodeTree = mapper.readTree(oaiString);
+
+			String oaiString = objectMapper.writer(new DefaultPrettyPrinter()).writeValueAsString(api);
+			JsonNode jsonNodeTree = objectMapper.readTree(oaiString);
 
 			return new YAMLMapper().writeValueAsString(jsonNodeTree);
 		} catch (IOException e) {
