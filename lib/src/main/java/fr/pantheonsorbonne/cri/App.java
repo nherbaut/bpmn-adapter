@@ -13,10 +13,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 public class App {
 
 	@Parameter(names = { "--bpmn2-input-dir", "-i" }, description = "path to your bpmn2 file")
-	File bpmn2File = new File("target/classes/choreography.xml");
+	File bpmn2File = new File("target/classes/choreography.bpmn2");
 
 	@Parameter(names = { "--output-directory", "-o" }, description = "a place to store your openapis file")
-	File outputDirectory = new File(".");
+	File outputDirectory = new File("target/openapi");
 
 	@Parameter(names = { "--write-openapi-files", "-w" }, description = "generate the openapi yaml specs on disk")
 	boolean writeOpenApiFiles = false;

@@ -3,6 +3,10 @@ package fr.pantheonsorbonne.cri;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,13 +58,11 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.fasterxml.jackson.module.jsonSchema.factories.SchemaFactoryWrapper;
 import com.fasterxml.jackson.module.jsonSchema.factories.VisitorContext;
-import com.fasterxml.jackson.module.jsonSchema.factories.WrapperFactory;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -85,6 +87,11 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 
 public class BPMNFacade {
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.TYPE)
+	public @interface FromXSD {
+	};
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BPMNFacade.class);
 	private ClassLoader privateClassLoader = new ByteArrayClassLoader(this.getClass().getClassLoader(),
@@ -121,50 +128,34 @@ public class BPMNFacade {
 
 	}
 
-	private static class IgnoreURNSchemaFactoryWrapper extends SchemaFactoryWrapper {
-		public IgnoreURNSchemaFactoryWrapper() {
-			this(null, new WrapperFactory());
-		}
-
-//		public IgnoreURNSchemaFactoryWrapper(SerializerProvider p) {
-//			this(p, new WrapperFactory());
-//		}
-//
-//		protected IgnoreURNSchemaFactoryWrapper(WrapperFactory wrapperFactory) {
-//			this(null, wrapperFactory);
-//		}
-
-		public IgnoreURNSchemaFactoryWrapper(SerializerProvider p, WrapperFactory wrapperFactory) {
-			super(p, wrapperFactory);
-			visitorContext = new VisitorContext() {
-				public String javaTypeToUrn(JavaType jt) {
-					return null;
-				}
-			};
-		}
-	}
-
 	private Components getComponents() {
 		Components components = new Components();
-		ObjectMapper mapper = new ObjectMapper();
-		IgnoreURNSchemaFactoryWrapper visitor = new IgnoreURNSchemaFactoryWrapper();
+		var schemaFactoryWrapper = new SchemaFactoryWrapper();
+		schemaFactoryWrapper.setVisitorContext(new VisitorContext() {
+			
+			@Override
+			 public String javaTypeToUrn(JavaType jt) {
+			        return  jt.toCanonical().replace('.', ':').replace('$', ':');
+			    }
+		});
+		var schemaGenerator = new JsonSchemaGenerator(getObjectMapper(),schemaFactoryWrapper);
 
 		try {
 
 			for (Map.Entry<String, Collection<Class<?>>> type : this.types.entrySet()) {
 				for (Class<?> klass : type.getValue()) {
 
-					// create a json schema from this class
-					mapper.acceptJsonFormatVisitor(klass, visitor);
-					JsonSchema jsonSchema = visitor.finalSchema();
+					var jsonSchema = schemaGenerator.generateSchema(klass);
+					var jsonSchemaStr = this.getObjectMapper().writerWithDefaultPrettyPrinter()
+							.writeValueAsString(jsonSchema);
 
-					String jsonSchemaStr = mapper.writer().writeValueAsString(jsonSchema);
+					LOGGER.debug("Schema for klass : {} is \n {}",klass.getName(),jsonSchemaStr);
 
 					// parse the schema as json
-					ObjectNode objectNode = new ObjectMapper().readValue(jsonSchemaStr, ObjectNode.class);
+					var objectNode = new ObjectMapper().readValue(jsonSchemaStr, ObjectNode.class);
 
 					// use the unsealed Deserializer to generate the schema
-					Schema<?> schema = new OpenAPIDeserializer2().getSchema(objectNode, "");
+					var schema = new OpenAPIDeserializer2().getSchema(objectNode, "");
 					components.addSchemas(klass.getName(), schema);
 
 				}
@@ -281,6 +272,9 @@ public class BPMNFacade {
 	private static final AnnotationDescription REQUIRED_FIELD = AnnotationDescription.Builder.ofType(JsonProperty.class)
 			.define("value", "").define("required", true).build();
 
+	private static final AnnotationDescription GENERATED_TYPE_ANNOTATION = AnnotationDescription.Builder
+			.ofType(FromXSD.class).build();
+
 	private Collection<Class<?>> getExternalTypes(File path) {
 
 		Collection<Class<?>> res = new ArrayList<Class<?>>();
@@ -306,7 +300,7 @@ public class BPMNFacade {
 			DynamicType.Builder<?> typeBuilder = null;
 
 			if (klassifier instanceof EClass) {
-				typeBuilder = bb.subclass(Object.class);
+				typeBuilder = bb.subclass(Object.class).annotateType(GENERATED_TYPE_ANNOTATION);
 				EClass klass = (EClass) klassifier;
 				for (int i = 0; i < klass.getFeatureCount(); i++) {
 					ETypedElement feature = klass.getEStructuralFeature(i);
