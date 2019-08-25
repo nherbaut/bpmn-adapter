@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>lib</module>
+		<module>openapi-facade</module>
 		<module>web</module>
     <module>grpc-facade</module>
   </modules>
