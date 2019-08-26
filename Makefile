@@ -15,3 +15,5 @@ run: stop-docker
 push: docker
 	sudo docker push nherbaut/bpmn-openapi-adapter
 
+pull:
+	sudo docker pull nherbaut/bpmn-openapi-adapter
