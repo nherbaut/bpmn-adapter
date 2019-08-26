@@ -1,10 +1,19 @@
 @charset "UTF-8";
-footer{
-	height: 150px;
+
+footer div{
+	padding: 20px 0 20px 0;
+	min-height: 50px;
 }
 
-footer a{
-	color: white;
-	text-align: center;
+
+footer div div a{
+	color:white;
 }
 
+#cri{
+	float:left;
+}
+
+#p1{
+	float:right;
+}
