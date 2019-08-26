@@ -2,7 +2,9 @@ package fr.pantheonsorbonne.cri.bpmn.web;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.base.Strings;
+
 import fr.pantheonsorbonne.cri.BPMNFacade;
 import fr.pantheonsorbonne.cri.bpmn.GRPCFacade;
 import net.lingala.zip4j.ZipFile;
@@ -23,13 +27,25 @@ public class BPMNFileService {
 
 	public File getBPMNFile(MultipartFile f) {
 		try {
+
 			Path userPayloadZipFile = Files.createTempFile("bpmnFileService", ".zip");
 			Path userPayloadZipFileUnpackedDir = Files.createTempDirectory("bpmnFileServiceDir");
 			Path userResponseUnpackedDir = Files
 					.createTempDirectory(userPayloadZipFileUnpackedDir.getFileName().toString());
 			Path userResponseZipFile = Files.createTempFile(userPayloadZipFile.getFileName().toString(), ".zip");
-			try (FileOutputStream fos = new FileOutputStream(userPayloadZipFile.toFile())) {
-				fos.write(f.getBytes());
+
+			if (Strings.isNullOrEmpty(f.getOriginalFilename())) {
+				// from example
+				InputStream is = getClass().getClassLoader().getResourceAsStream("choreo.zip");
+				byte[] buffer = new byte[is.available()];
+				is.read(buffer);
+
+				Files.write(userPayloadZipFile, buffer);
+
+			} else {
+				try (FileOutputStream fos = new FileOutputStream(userPayloadZipFile.toFile())) {
+					fos.write(f.getBytes());
+				}
 			}
 
 			ZipFile zipFileUserRequestPayload = new ZipFile(userPayloadZipFile.toFile());
