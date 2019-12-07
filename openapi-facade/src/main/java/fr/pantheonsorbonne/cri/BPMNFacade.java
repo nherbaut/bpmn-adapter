@@ -42,9 +42,9 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.ETypedElement;
 import org.eclipse.xsd.ecore.XSDEcoreBuilder;
 import org.openapitools.codegen.ClientOptInput;
+import org.openapitools.codegen.CodegenConfig;
 import org.openapitools.codegen.DefaultGenerator;
-import org.openapitools.codegen.languages.AbstractJavaCodegen;
-import org.openapitools.codegen.languages.JavaJerseyServerCodegen;
+import org.openapitools.codegen.languages.SpringCodegen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -616,7 +616,8 @@ public class BPMNFacade {
 
 	private void writeJavaServerStubs(String participantNameEscaped, OpenAPI api, File outputDirectory) {
 		ClientOptInput opts = new ClientOptInput();
-		AbstractJavaCodegen config = new JavaJerseyServerCodegen();
+		CodegenConfig config = new SpringCodegen();
+		
 		config.setOutputDir(
 				Paths.get(outputDirectory.getPath(), participantNameEscaped, "REST_server_stub").toString());
 		opts.config(config);
